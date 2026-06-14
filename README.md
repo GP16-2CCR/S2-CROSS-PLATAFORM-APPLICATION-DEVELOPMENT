@@ -52,13 +52,14 @@ npm start
 
 Os dados iniciais ficam em `src/data/mockOcorrencias.ts` como um **array fixo** de ocorrências relacionadas à operação rodoviária da Motiva (grama acima de 30 cm, vegetação invadindo pista, placa obstruída, canteiro central, defensa metálica, etc.).
 
-Ao abrir o app, esse array é carregado no estado:
+Na **primeira execução**, esse mock é carregado no estado. Depois disso, tudo é salvo automaticamente com **AsyncStorage** — inclusive no **web** (localStorage do navegador).
 
 ```typescript
-const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>(mockOcorrencias);
+const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+// carrega do AsyncStorage ao abrir; salva a cada alteração
 ```
 
-Quando o usuário cadastra uma nova ocorrência, ela é adicionada ao estado em memória via `setOcorrencias`. Os dados **não persistem** após fechar o app (evolução futura: AsyncStorage).
+Cadastros, edições e chamados fechados **persistem após F5** ou ao reabrir o app. Para voltar aos mocks originais, limpe os dados do site no navegador ou reinstale o app.
 
 ## Fluxo funcional
 
@@ -73,6 +74,7 @@ Quando o usuário cadastra uma nova ocorrência, ela é adicionada ao estado em 
 - TypeScript
 - React Navigation (Native Stack)
 - React Hooks (`useState`, Context API)
+- AsyncStorage (persistência local)
 
 ## Equipe
 

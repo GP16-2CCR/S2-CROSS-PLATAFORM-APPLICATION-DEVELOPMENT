@@ -1,6 +1,17 @@
-import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { mockOcorrencias } from "../data/mockOcorrencias";
 import { NovaOcorrencia, Ocorrencia } from "../types/ocorrencia";
+
+const STORAGE_KEY = "@motiva/ocorrencias";
 
 type OcorrenciasContextValue = {
   ocorrencias: Ocorrencia[];
@@ -12,8 +23,46 @@ type OcorrenciasContextValue = {
 
 const OcorrenciasContext = createContext<OcorrenciasContextValue | null>(null);
 
+function normalizarOcorrencias(dados: Ocorrencia[]): Ocorrencia[] {
+  return dados.map((item) => ({
+    ...item,
+    status: item.status ?? "aberta",
+  }));
+}
+
 export function OcorrenciasProvider({ children }: { children: ReactNode }) {
-  const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>(mockOcorrencias);
+  const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function carregarOcorrencias() {
+      try {
+        const salvo = await AsyncStorage.getItem(STORAGE_KEY);
+
+        if (salvo) {
+          setOcorrencias(normalizarOcorrencias(JSON.parse(salvo)));
+          return;
+        }
+
+        setOcorrencias(mockOcorrencias);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mockOcorrencias));
+      } catch {
+        setOcorrencias(mockOcorrencias);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarOcorrencias();
+  }, []);
+
+  useEffect(() => {
+    if (carregando) {
+      return;
+    }
+
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ocorrencias)).catch(() => {});
+  }, [ocorrencias, carregando]);
 
   const obterOcorrencia = (id: number) =>
     ocorrencias.find((item) => item.id === id);
@@ -29,9 +78,7 @@ export function OcorrenciasProvider({ children }: { children: ReactNode }) {
 
   const atualizarOcorrencia = (id: number, dados: NovaOcorrencia) => {
     setOcorrencias((atual) =>
-      atual.map((item) =>
-        item.id === id ? { ...item, ...dados } : item
-      )
+      atual.map((item) => (item.id === id ? { ...item, ...dados } : item))
     );
   };
 
@@ -54,6 +101,14 @@ export function OcorrenciasProvider({ children }: { children: ReactNode }) {
     [ocorrencias]
   );
 
+  if (carregando) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#1a365d" />
+      </View>
+    );
+  }
+
   return (
     <OcorrenciasContext.Provider value={value}>
       {children}
@@ -70,3 +125,12 @@ export function useOcorrencias() {
 
   return context;
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f7fafc",
+  },
+});

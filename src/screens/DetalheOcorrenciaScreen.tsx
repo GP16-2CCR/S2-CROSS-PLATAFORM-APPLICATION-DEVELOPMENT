@@ -1,12 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { useOcorrencias } from "../context/OcorrenciasContext";
 import { DetalheScreenProps } from "../navigation/types";
 import { Risco, StatusOcorrencia } from "../types/ocorrencia";
@@ -38,8 +38,9 @@ export function DetalheOcorrenciaScreen({
   navigation,
 }: DetalheScreenProps) {
   const { id } = route.params;
-  const { obterOcorrencia, fecharOcorrencia } = useOcorrencias();
-  const ocorrencia = obterOcorrencia(id);
+  const { ocorrencias, fecharOcorrencia } = useOcorrencias();
+  const ocorrencia = ocorrencias.find((item) => item.id === id);
+  const [modalFecharVisible, setModalFecharVisible] = useState(false);
 
   useEffect(() => {
     if (!ocorrencia) {
@@ -58,24 +59,16 @@ export function DetalheOcorrenciaScreen({
       return;
     }
 
-    Alert.alert(
-      "Fechar chamado",
-      "Deseja encerrar esta ocorrência? Ela permanecerá na lista como fechada.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Fechar",
-          style: "destructive",
-          onPress: () => {
-            fecharOcorrencia(id);
-            Alert.alert("Chamado fechado", "A ocorrência foi encerrada com sucesso.");
-          },
-        },
-      ]
-    );
+    setModalFecharVisible(true);
+  }
+
+  function confirmarFechar() {
+    fecharOcorrencia(id);
+    setModalFecharVisible(false);
   }
 
   return (
+    <>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.badgeRow}>
         <View style={styles.badges}>
@@ -150,6 +143,17 @@ export function DetalheOcorrenciaScreen({
         </Pressable>
       </View>
     </ScrollView>
+
+    <ConfirmModal
+      visible={modalFecharVisible}
+      titulo="Fechar chamado"
+      mensagem="Deseja encerrar esta ocorrência? Ela permanecerá na lista como fechada."
+      textoConfirmar="Fechar"
+      onConfirm={confirmarFechar}
+      onCancel={() => setModalFecharVisible(false)}
+      perigo
+    />
+    </>
   );
 }
 
