@@ -17,7 +17,7 @@ export function ListaOcorrenciasScreen({ navigation }: ListaScreenProps) {
       <View style={styles.header}>
         <Text style={styles.title}>Motiva Segurança</Text>
         <Text style={styles.subtitle}>
-          Registro de ocorrências operacionais
+          Registro de ocorrências de conservação rodoviária
         </Text>
       </View>
 
@@ -36,7 +36,7 @@ export function ListaOcorrenciasScreen({ navigation }: ListaScreenProps) {
           renderItem={({ item }) => (
             <OcorrenciaCard
               ocorrencia={item}
-              onPress={() => navigation.navigate("Detalhe", { ocorrencia: item })}
+              onPress={() => navigation.navigate("Detalhe", { id: item.id })}
             />
           )}
         />

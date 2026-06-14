@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useOcorrencias } from "../context/OcorrenciasContext";
-import { CadastroScreenProps } from "../navigation/types";
+import { EditarScreenProps } from "../navigation/types";
 import { Risco } from "../types/ocorrencia";
 
 const opcoesRisco: { label: string; value: Risco }[] = [
@@ -18,12 +18,32 @@ const opcoesRisco: { label: string; value: Risco }[] = [
   { label: "Alto", value: "alto" },
 ];
 
-export function CadastroOcorrenciaScreen({ navigation }: CadastroScreenProps) {
-  const { adicionarOcorrencia } = useOcorrencias();
+export function EditarOcorrenciaScreen({ route, navigation }: EditarScreenProps) {
+  const { id } = route.params;
+  const { obterOcorrencia, atualizarOcorrencia } = useOcorrencias();
+  const ocorrencia = obterOcorrencia(id);
+
   const [descricao, setDescricao] = useState("");
   const [local, setLocal] = useState("");
   const [risco, setRisco] = useState<Risco>("medio");
-  const [data, setData] = useState(formatarDataAtual());
+  const [data, setData] = useState("");
+
+  useEffect(() => {
+    if (!ocorrencia) {
+      navigation.navigate("Lista");
+      return;
+    }
+
+    if (ocorrencia.status === "fechada") {
+      navigation.replace("Detalhe", { id });
+      return;
+    }
+
+    setDescricao(ocorrencia.descricao);
+    setLocal(ocorrencia.local);
+    setRisco(ocorrencia.risco);
+    setData(ocorrencia.data);
+  }, [id, navigation, ocorrencia]);
 
   function handleSalvar() {
     if (!descricao.trim() || !local.trim() || !data.trim()) {
@@ -31,24 +51,27 @@ export function CadastroOcorrenciaScreen({ navigation }: CadastroScreenProps) {
       return;
     }
 
-    adicionarOcorrencia({
+    atualizarOcorrencia(id, {
       descricao: descricao.trim(),
       local: local.trim(),
       risco,
       data,
     });
 
-    Alert.alert("Sucesso", "Ocorrência registrada com sucesso.", [
-      { text: "OK", onPress: () => navigation.navigate("Lista") },
+    Alert.alert("Sucesso", "Ocorrência atualizada com sucesso.", [
+      { text: "OK", onPress: () => navigation.navigate("Detalhe", { id }) },
     ]);
+  }
+
+  if (!ocorrencia || ocorrencia.status === "fechada") {
+    return null;
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Nova ocorrência</Text>
+      <Text style={styles.title}>Editar ocorrência</Text>
       <Text style={styles.subtitle}>
-        Registre ocorrências de vegetação e sinalização identificadas na
-        operação Motiva.
+        Atualize as informações do chamado #{ocorrencia.id}.
       </Text>
 
       <Text style={styles.label}>Descrição</Text>
@@ -104,18 +127,10 @@ export function CadastroOcorrenciaScreen({ navigation }: CadastroScreenProps) {
         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
         onPress={handleSalvar}
       >
-        <Text style={styles.buttonText}>Salvar ocorrência</Text>
+        <Text style={styles.buttonText}>Salvar alterações</Text>
       </Pressable>
     </ScrollView>
   );
-}
-
-function formatarDataAtual() {
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  const dia = String(hoje.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
 }
 
 const styles = StyleSheet.create({
@@ -125,7 +140,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 56,
+    paddingTop: 24,
     paddingBottom: 40,
   },
   title: {

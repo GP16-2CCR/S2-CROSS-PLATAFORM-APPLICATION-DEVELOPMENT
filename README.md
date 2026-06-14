@@ -2,7 +2,7 @@
 
 Aplicativo mobile desenvolvido em **React Native + Expo** para a Sprint 2 do curso de Cross-Platform Application Development (FIAP).
 
-O app simula o registro de **ocorrências de segurança operacional** da empresa **Motiva**, permitindo que colaboradores registrem incidentes, classifiquem o nível de risco e acompanhem os registros em uma lista centralizada.
+O app simula o registro de **ocorrências de conservação rodoviária** da empresa **Motiva**, permitindo que equipes registrem problemas de vegetação e sinalização nas rodovias, classifiquem o nível de risco e acompanhem os registros em uma lista centralizada.
 
 ## O que o app faz
 
@@ -50,7 +50,7 @@ npm start
 
 ## Como os dados estão mockados
 
-Os dados iniciais ficam em `src/data/mockOcorrencias.ts` como um **array fixo** de ocorrências relacionadas à operação industrial da Motiva (vazamentos, EPI, iluminação, empilhadeiras, etc.).
+Os dados iniciais ficam em `src/data/mockOcorrencias.ts` como um **array fixo** de ocorrências relacionadas à operação rodoviária da Motiva (grama acima de 30 cm, vegetação invadindo pista, placa obstruída, canteiro central, defensa metálica, etc.).
 
 Ao abrir o app, esse array é carregado no estado:
 

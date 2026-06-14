@@ -1,6 +1,15 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useOcorrencias } from "../context/OcorrenciasContext";
 import { DetalheScreenProps } from "../navigation/types";
-import { Risco } from "../types/ocorrencia";
+import { Risco, StatusOcorrencia } from "../types/ocorrencia";
 
 const riscoLabels: Record<Risco, string> = {
   baixo: "Baixo",
@@ -14,21 +23,82 @@ const riscoColors: Record<Risco, string> = {
   alto: "#e53e3e",
 };
 
-export function DetalheOcorrenciaScreen({ route }: DetalheScreenProps) {
-  const { ocorrencia } = route.params;
+const statusLabels: Record<StatusOcorrencia, string> = {
+  aberta: "Aberta",
+  fechada: "Fechada",
+};
+
+const statusColors: Record<StatusOcorrencia, string> = {
+  aberta: "#2b6cb0",
+  fechada: "#718096",
+};
+
+export function DetalheOcorrenciaScreen({
+  route,
+  navigation,
+}: DetalheScreenProps) {
+  const { id } = route.params;
+  const { obterOcorrencia, fecharOcorrencia } = useOcorrencias();
+  const ocorrencia = obterOcorrencia(id);
+
+  useEffect(() => {
+    if (!ocorrencia) {
+      navigation.navigate("Lista");
+    }
+  }, [navigation, ocorrencia]);
+
+  if (!ocorrencia) {
+    return null;
+  }
+
+  const fechada = ocorrencia.status === "fechada";
+
+  function handleFechar() {
+    if (fechada) {
+      return;
+    }
+
+    Alert.alert(
+      "Fechar chamado",
+      "Deseja encerrar esta ocorrência? Ela permanecerá na lista como fechada.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Fechar",
+          style: "destructive",
+          onPress: () => {
+            fecharOcorrencia(id);
+            Alert.alert("Chamado fechado", "A ocorrência foi encerrada com sucesso.");
+          },
+        },
+      ]
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.badgeRow}>
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: riscoColors[ocorrencia.risco] },
-          ]}
-        >
-          <Text style={styles.badgeText}>
-            Risco {riscoLabels[ocorrencia.risco]}
-          </Text>
+        <View style={styles.badges}>
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: riscoColors[ocorrencia.risco] },
+            ]}
+          >
+            <Text style={styles.badgeText}>
+              Risco {riscoLabels[ocorrencia.risco]}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: statusColors[ocorrencia.status] },
+            ]}
+          >
+            <Text style={styles.badgeText}>
+              {statusLabels[ocorrencia.status]}
+            </Text>
+          </View>
         </View>
         <Text style={styles.data}>{formatarData(ocorrencia.data)}</Text>
       </View>
@@ -43,9 +113,41 @@ export function DetalheOcorrenciaScreen({ route }: DetalheScreenProps) {
         <Text style={styles.infoTitle}>Protocolo Motiva</Text>
         <Text style={styles.infoText}>
           Ocorrência #{ocorrencia.id} registrada para acompanhamento da equipe
-          de segurança do trabalho. Priorize ações corretivas conforme o nível
-          de risco identificado.
+          de conservação rodoviária. Priorize a roçada e a desobstrução conforme
+          o nível de risco identificado.
         </Text>
+      </View>
+
+      <View style={styles.actions}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.buttonEdit,
+            fechada && styles.buttonDisabled,
+            pressed && !fechada && styles.buttonPressed,
+          ]}
+          onPress={() => navigation.navigate("Editar", { id })}
+          disabled={fechada}
+        >
+          <Text style={[styles.buttonText, fechada && styles.buttonTextDisabled]}>
+            Editar
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            styles.buttonClose,
+            fechada && styles.buttonDisabled,
+            pressed && !fechada && styles.buttonPressed,
+          ]}
+          onPress={handleFechar}
+          disabled={fechada}
+        >
+          <Text style={[styles.buttonText, fechada && styles.buttonTextDisabled]}>
+            {fechada ? "Chamado fechado" : "Fechar chamado"}
+          </Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -69,8 +171,15 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 24,
+    gap: 12,
+  },
+  badges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    flex: 1,
   },
   badge: {
     paddingHorizontal: 14,
@@ -113,6 +222,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "#bee3f8",
+    marginBottom: 24,
   },
   infoTitle: {
     fontSize: 15,
@@ -124,5 +234,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#2c5282",
     lineHeight: 21,
+  },
+  actions: {
+    gap: 12,
+  },
+  button: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  buttonEdit: {
+    backgroundColor: "#2b6cb0",
+  },
+  buttonClose: {
+    backgroundColor: "#1a365d",
+  },
+  buttonDisabled: {
+    backgroundColor: "#e2e8f0",
+  },
+  buttonPressed: {
+    opacity: 0.9,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  buttonTextDisabled: {
+    color: "#a0aec0",
   },
 });

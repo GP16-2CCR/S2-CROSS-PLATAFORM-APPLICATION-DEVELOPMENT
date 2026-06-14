@@ -26,16 +26,29 @@ export function OcorrenciaCard({ ocorrencia, onPress }: Props) {
     >
       <View style={styles.header}>
         <Text style={styles.local}>{ocorrencia.local}</Text>
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: riscoColors[ocorrencia.risco] },
-          ]}
-        >
-          <Text style={styles.badgeText}>{riscoLabels[ocorrencia.risco]}</Text>
+        <View style={styles.badges}>
+          {ocorrencia.status === "fechada" && (
+            <View style={[styles.badge, styles.badgeFechada]}>
+              <Text style={styles.badgeText}>Fechada</Text>
+            </View>
+          )}
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: riscoColors[ocorrencia.risco] },
+            ]}
+          >
+            <Text style={styles.badgeText}>{riscoLabels[ocorrencia.risco]}</Text>
+          </View>
         </View>
       </View>
-      <Text style={styles.descricao} numberOfLines={2}>
+      <Text
+        style={[
+          styles.descricao,
+          ocorrencia.status === "fechada" && styles.descricaoFechada,
+        ]}
+        numberOfLines={2}
+      >
         {ocorrencia.descricao}
       </Text>
       <Text style={styles.data}>{formatarData(ocorrencia.data)}</Text>
@@ -71,6 +84,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  badges: {
+    flexDirection: "row",
+    gap: 6,
+  },
   local: {
     fontSize: 14,
     fontWeight: "700",
@@ -83,6 +100,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
+  badgeFechada: {
+    backgroundColor: "#718096",
+  },
   badgeText: {
     color: "#fff",
     fontSize: 12,
@@ -93,6 +113,9 @@ const styles = StyleSheet.create({
     color: "#2d3748",
     lineHeight: 22,
     marginBottom: 8,
+  },
+  descricaoFechada: {
+    color: "#a0aec0",
   },
   data: {
     fontSize: 13,
